@@ -48,7 +48,7 @@ export default function Header() {
             renderPopover={
               <div>
                 <Link
-                  to='/'
+                  to='/profile'
                   className='hover: block w-full bg-slate-100 bg-white py-2 px-4 text-left hover:text-cyan-500'
                 >
                   Tài khoản của tôi
