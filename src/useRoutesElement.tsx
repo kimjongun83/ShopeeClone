@@ -4,7 +4,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import RegisterLayout from './layout/RegisterLayout'
 import MainLayout from './layout/MainLayout/MainLayout'
-import path from 'path'
+import path from './constants/path.'
 import Profile from './pages/Profile'
 
 const isAuthenticated = false
@@ -22,7 +22,7 @@ export default function useRoutesElements() {
       element: <ProtectedRoute />,
       children: [
         {
-          path: '/profile',
+          path: path.profile,
           element: (
             <MainLayout>
               <Profile />
@@ -36,7 +36,7 @@ export default function useRoutesElements() {
       element: <RejectedRoute />,
       children: [
         {
-          path: '/login',
+          path: path.login,
           element: (
             <RegisterLayout>
               <Login />
@@ -44,7 +44,7 @@ export default function useRoutesElements() {
           )
         },
         {
-          path: '/register',
+          path: path.register,
           element: (
             <RegisterLayout>
               <Register />
