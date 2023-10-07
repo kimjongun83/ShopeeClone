@@ -4,15 +4,23 @@ import { Link } from 'react-router-dom'
 import Input from 'src/components/Input'
 import { getRules } from 'src/utils/rule'
 import { omit } from 'lodash'
+import { useNavigate } from 'react-router-dom'
+import { useContext } from 'react'
+import { AppContext } from 'src/context/app.context'
 import { useMutation } from '@tanstack/react-query'
 import { loginAccount } from 'src/apis/auth.api'
 import { isAxiosUnProcessableEntityError } from 'src/utils/utils'
-import { ResponseApi } from 'src/types/utils.type'
+import { ErrorResponse } from 'src/types/utils.type'
+import Button from 'src/components/Button'
+import path from 'src/constants/path.'
 interface FormData {
   email: string
   password: string
 }
 export default function Login() {
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
+  const navigate = useNavigate()
+
   const {
     register,
     handleSubmit,
@@ -29,10 +37,12 @@ export default function Login() {
   const onSubmit = handleSubmit((data) => {
     loginAccountMutation.mutate(data, {
       onSuccess: (data) => {
-        console.log('data: ', data)
+        setIsAuthenticated(true)
+        setProfile(data.data.data.user)
+        navigate('/')
       },
       onError: (error) => {
-        if (isAxiosUnProcessableEntityError<ResponseApi<FormData>>(error)) {
+        if (isAxiosUnProcessableEntityError<ErrorResponse<FormData>>(error)) {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {
@@ -73,16 +83,18 @@ export default function Login() {
                 autoComplete='on'
               />
               <div className='mt-3'>
-                <button
+                <Button
                   type='submit'
-                  className='flex  w-full items-center justify-center bg-red-500 py-4 px-2 text-sm uppercase text-white hover:bg-red-600'
+                  className='flex  flex w-full items-center items-center justify-center justify-center bg-red-500 py-4 px-2 text-sm uppercase text-white hover:bg-red-600'
+                  disabled={loginAccountMutation.isLoading}
+                  isLoading={loginAccountMutation.isLoading}
                 >
                   Đăng Nhập
-                </button>
+                </Button>
               </div>
               <div className='mt-8 flex items-center justify-center'>
                 <span className='text-gray-400'>Bạn chưa có tài khoản?</span>
-                <Link className='ml-1 text-red-400' to='/register'>
+                <Link className='ml-1 text-red-400' to={path.register}>
                   Đăng ký
                 </Link>
               </div>
