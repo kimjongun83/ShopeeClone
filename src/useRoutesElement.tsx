@@ -6,6 +6,7 @@ import RegisterLayout from './layout/RegisterLayout'
 import MainLayout from './layout/MainLayout/MainLayout'
 import path from './constants/path.'
 import Profile from './pages/Profile'
+import ProductDetail from './pages/ProductDetail'
 
 const isAuthenticated = false
 function ProtectedRoute() {
@@ -52,6 +53,15 @@ export default function useRoutesElements() {
           )
         }
       ]
+    },
+    {
+      path: path.productDetail,
+      index: true,
+      element: (
+        <MainLayout>
+          <ProductDetail />
+        </MainLayout>
+      )
     },
     {
       path: '/',

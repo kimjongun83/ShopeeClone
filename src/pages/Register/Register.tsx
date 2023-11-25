@@ -5,8 +5,8 @@ import { getRules } from 'src/utils/rule'
 import Input from 'src/components/Input'
 import { omit } from 'lodash'
 import { useMutation } from '@tanstack/react-query'
-import { registerAccount } from 'src/apis/auth.api'
-import { isAxiosUnProcessableEntityError } from 'src/utils/utils'
+import authApi from 'src/apis/auth.api'
+import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 import { ErrorResponse } from 'src/types/utils.type'
 import { useContext } from 'react'
 import { AppContext } from 'src/context/app.context'
@@ -29,7 +29,7 @@ export default function Register() {
     formState: { errors }
   } = useForm<FormData>()
   const registerAccountMutation = useMutation({
-    mutationFn: (body: Omit<FormData, 'confirm_password'>) => registerAccount(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.registerAccount(body)
   })
   const rules = getRules(getValues)
   const onSubmit = handleSubmit((data) => {
@@ -41,7 +41,7 @@ export default function Register() {
         navigate('/')
       },
       onError: (error) => {
-        if (isAxiosUnProcessableEntityError<ErrorResponse<Omit<FormData, 'confirm_password'>>>(error)) {
+        if (isAxiosUnprocessableEntityError<ErrorResponse<Omit<FormData, 'confirm_password'>>>(error)) {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {

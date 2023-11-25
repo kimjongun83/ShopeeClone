@@ -8,8 +8,8 @@ import { useNavigate } from 'react-router-dom'
 import { useContext } from 'react'
 import { AppContext } from 'src/context/app.context'
 import { useMutation } from '@tanstack/react-query'
-import { loginAccount } from 'src/apis/auth.api'
-import { isAxiosUnProcessableEntityError } from 'src/utils/utils'
+import authApi from 'src/apis/auth.api'
+import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 import { ErrorResponse } from 'src/types/utils.type'
 import Button from 'src/components/Button'
 import path from 'src/constants/path.'
@@ -32,7 +32,7 @@ export default function Login() {
   const rules = getRules(getValues)
 
   const loginAccountMutation = useMutation({
-    mutationFn: (body: Omit<FormData, 'confirm_password'>) => loginAccount(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.login(body)
   })
   const onSubmit = handleSubmit((data) => {
     loginAccountMutation.mutate(data, {
@@ -42,7 +42,7 @@ export default function Login() {
         navigate('/')
       },
       onError: (error) => {
-        if (isAxiosUnProcessableEntityError<ErrorResponse<FormData>>(error)) {
+        if (isAxiosUnprocessableEntityError<ErrorResponse<FormData>>(error)) {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {
