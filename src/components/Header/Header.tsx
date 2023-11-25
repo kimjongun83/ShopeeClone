@@ -1,24 +1,71 @@
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, createSearchParams, useNavigate } from 'react-router-dom'
 import Popover from '../Popover'
-import { useMutation } from '@tanstack/react-query'
-import { logout } from 'src/apis/auth.api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import authApi from 'src/apis/auth.api'
 import { useContext } from 'react'
 import { AppContext } from 'src/context/app.context'
 import path from 'src/constants/path.'
+import useQueryConfig from 'src/hooks/useQueryConfig'
+import { useForm } from 'react-hook-form'
+import { Schema, schema } from 'src/utils/rule'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { omit } from 'lodash'
+import { purchasesStatus } from 'src/constants/purchase'
+import { purchaseApi } from 'src/apis/purchase.api'
+import noproduct from 'src/assets/images/no-product.png'
+import { formatCurrency } from 'src/utils/utils'
 
+type FormData = Pick<Schema, 'name'>
+
+const nameSchema = schema.pick(['name'])
+const MAX_PURCHASES = 33
 export default function Header() {
+  const navigate = useNavigate()
+  const queryConfig = useQueryConfig()
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      name: ''
+    },
+    resolver: yupResolver(nameSchema)
+  })
   const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
+  const queryClient = useQueryClient()
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: authApi.logout,
     onSuccess: () => {
       setIsAuthenticated(false)
       setProfile(null)
+      queryClient.removeQueries({ queryKey: ['purchases', { status: purchasesStatus.inCart }] })
     }
   })
-
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchasesStatus.inCart }],
+    queryFn: () => purchaseApi.getPurchases({ status: purchasesStatus.inCart })
+  })
+  const purchasesIncart = purchasesInCartData?.data.data
+  console.log('purchasesIncart', purchasesIncart)
   const handleLogout = () => {
     logoutMutation.mutate()
   }
+  const onSubmitSearch = handleSubmit((data) => {
+    const config = queryConfig.order
+      ? omit(
+          {
+            ...queryConfig,
+            sort_by: data.name
+          },
+          ['order', 'sort_by']
+        )
+      : {
+          ...queryConfig,
+          name: data.name
+        }
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(config).toString()
+    })
+  })
   return (
     <div className='bg-[linear-gradient(-180deg,#f53d2d,#f63)] pb-5 pt-2 text-white'>
       <div className='container'>
@@ -116,13 +163,13 @@ export default function Header() {
               </g>
             </svg>
           </Link>
-          <form className='col-span-9'>
+          <form className='col-span-9' onSubmit={onSubmitSearch}>
             <div className='flex rounded-sm bg-white p-1 '>
               <input
                 type='text'
-                name='search'
                 placeholder='Free Ship đơn từ 0đ'
                 className=' flex-grow border-none bg-transparent px-3 py-2 text-black outline-none'
+                {...register('name')}
               />
               <button className='flex-shrink-0 rounded-sm bg-orange py-2 px-6 hover:opacity-90'>
                 <svg
@@ -145,89 +192,46 @@ export default function Header() {
           <div className='col-span-1 justify-self-end'>
             <Popover
               placement='bottom-start'
-              initialOpen
               renderPopover={
                 <div className='relative  max-w-[400px] rounded-sm border border-gray-200 bg-white text-sm shadow-md'>
-                  <div className='p-2'>
-                    <div className='capitalize text-gray-400'>Sản Phẩm Mới Thêm</div>
-                    <div className='mt-5'>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img src='' alt='img1' className='h-11 w-11 object-cover' />
-                        </div>
-                        <div className='ml-2 flex-grow overflow-hidden'>
-                          <div className='truncate'>
-                            dssssssssssssssssssssssssssssssssssssssssss121212121212121212121212121212121212121212121212ssss
+                  {purchasesIncart ? (
+                    <div className='p-2'>
+                      <div className='capitalize text-gray-400'>Sản Phẩm Mới Thêm</div>
+                      <div className='mt-5'>
+                        {purchasesIncart.slice(0, MAX_PURCHASES).map((purchase: any) => (
+                          <div className='mt-2 flex py-2 hover:bg-gray-100' key={purchase._id}>
+                            <div className='flex-shrink-0'>
+                              <img
+                                src={purchase.product.image}
+                                alt={purchase.product.name}
+                                className='h-11 w-11 object-cover'
+                              />
+                            </div>
+                            <div className='ml-2 flex-grow overflow-hidden'>
+                              <div className='truncate'>{purchase.product.name}</div>
+                            </div>
+                            <div className='ml-2 flex-shrink-0'>
+                              <span className='text-orange'>₫{formatCurrency(purchase.product.price)}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <div className='text-orange'>469000d</div>
-                        </div>
+                        ))}
                       </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img src='' alt='img1' className='h-11 w-11 object-cover' />
-                        </div>
-                        <div className='ml-2  flex-grow overflow-hidden'>
-                          <div className='truncate'>
-                            dssssssssssssssssssssssssssssssssssssssssss121212121212121212121212121212121212121212121212ssss
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <div className='text-orange'>469000d</div>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img src='' alt='img1' className='h-11 w-11 object-cover' />
-                        </div>
-                        <div className='ml-2  flex-grow overflow-hidden'>
-                          <div className='truncate'>
-                            dssssssssssssssssssssssssssssssssssssssssss121212121212121212121212121212121212121212121212ssss
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <div className='text-orange'>469000d</div>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img src='' alt='img1' className='h-11 w-11 object-cover' />
-                        </div>
-                        <div className='ml-2  flex-grow overflow-hidden'>
-                          <div className='truncate'>
-                            dssssssssssssssssssssssssssssssssssssssssss121212121212121212121212121212121212121212121212ssss
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <div className='text-orange'>469000d</div>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img src='' alt='img1' className='h-11 w-11 object-cover' />
-                        </div>
-                        <div className='ml-2  flex-grow overflow-hidden'>
-                          <div className='truncate'>
-                            dssssssssssssssssssssssssssssssssssssssssss121212121212121212121212121212121212121212121212ssss
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <div className='text-orange'>469000d</div>
-                        </div>
+                      <div className='mt-6 flex items-center justify-between'>
+                        <div className='text-xs capitalize text-gray-500'>Thêm Hàng vào giỏ</div>
+                        <button className='rounded-sm bg-orange px-4 py-2 capitalize text-white hover:bg-opacity-90'>
+                          Xem Giỏ hàng
+                        </button>
                       </div>
                     </div>
-                    <div className='mt-6 flex items-center justify-between'>
-                      <div className='text-xs capitalize text-gray-500'>Thêm Hàng vào giỏ</div>
-                      <button className='rounded-sm bg-orange px-4 py-2 capitalize text-white hover:bg-opacity-90'>
-                        Xem Giỏ hàng
-                      </button>
+                  ) : (
+                    <div className='p2'>
+                      <img src={noproduct} alt='no purchase' />
                     </div>
-                  </div>
+                  )}
                 </div>
               }
             >
-              <Link to=''>
+              <Link to='' className='relative'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   fill='none'
@@ -242,6 +246,9 @@ export default function Header() {
                     d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'
                   />
                 </svg>
+                <span className='test-xs absolute top-[-10px] left-0 rounded-full bg-white px-[9px] py-[1px] text-orange'>
+                  {purchasesIncart?.length}
+                </span>
               </Link>
             </Popover>
           </div>
